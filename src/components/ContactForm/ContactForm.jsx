@@ -1,7 +1,9 @@
 import { Formik, ErrorMessage } from 'formik';
-import PropTypes from 'prop-types';
+import { useSelector, useDispatch } from 'react-redux';
 import * as yup from 'yup';
 import { FormStylized, FieldStylized, AddContBtn } from './ContactForm.styled';
+import { getContacts } from 'redux/selectors';
+import { addContact } from 'redux/contactsSlice';
 
 const schema = yup.object().shape({
   name: yup
@@ -30,16 +32,32 @@ const initialValues = {
   number: '',
 };
 
-export const ContactForm = ({ onAddContact }) => {
-  const handleSubmit = (values, actions) => {
-    onAddContact(values, actions);
+export const ContactForm = () => {
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
+
+  const handleSubmit = (values, { resetForm }) => {
+    const checkedContact = contacts.find(
+      contact => contact.name.toLowerCase() === values.name.toLowerCase()
+    );
+
+    if (checkedContact) {
+      alert(`a contact ${values.name} already exists`);
+      return;
+    }
+
+    dispatch(addContact(values));
+    resetForm({
+      name: '',
+      number: '',
+    });
   };
 
   return (
     <Formik
       initialValues={initialValues}
-      validationSchema={schema}
       onSubmit={handleSubmit}
+      validationSchema={schema}
     >
       <FormStylized autoComplete="off">
         <label htmlFor="name">
@@ -56,8 +74,4 @@ export const ContactForm = ({ onAddContact }) => {
       </FormStylized>
     </Formik>
   );
-};
-
-ContactForm.propTypes = {
-  onAddContact: PropTypes.func.isRequired,
 };
